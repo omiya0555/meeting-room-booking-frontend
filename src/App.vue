@@ -1,15 +1,14 @@
 <template>
-  <p class="text-xl w-16 mt-4 mx-auto">test</p>
-  <CalendarEvent></CalendarEvent>
+  <AppHome></AppHome>
 </template>
 
 <script>
-import CalendarEvent from './components/CalendarEvent.vue';
+import AppHome from './components/AppHome.vue';
 
 export default {
   name: 'App',
   components: {
-    CalendarEvent,
+    AppHome,
   }
 };
 </script>
