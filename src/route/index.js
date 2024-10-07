@@ -4,7 +4,7 @@ import AppHome from '@/components/AppHome.vue';
 // ルート定義
 const routes = [
     {
-        path: "/login",
+        path: "/",
         name: "LoginForm",
         component: LoginForm,
     },

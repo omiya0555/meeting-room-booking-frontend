@@ -36,10 +36,39 @@
                     </li>
                     <li>
                         <a href="#"
-                            class="block py-2 px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:border-0 md:hover:text-blue-700 md:p-0 dark:text-white md:dark:hover:text-blue-500 dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent">Logout</a>
+                            class="block py-2 px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:border-0 md:hover:text-blue-700 md:p-0 dark:text-white md:dark:hover:text-blue-500 dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent" @click="logout">Logout</a>
                     </li>
                 </ul>
             </div>
         </div>
     </nav>
 </template>
+
+
+<script>
+export default {
+    data() {
+        return {
+            isAuthenticated: !!localStorage.getItem('token') // ログインしているかどうかの状態を確認
+        };
+    },
+    methods: {
+        logout() {
+            // 誤操作によるログアウトを防止する確認フォーム
+            if (confirm("ログアウトしますか？")) {
+                // ログアウト処理
+                localStorage.removeItem('token'); // トークンを削除
+
+                this.$router.push('/'); // ログインページ
+            }
+        }
+    },
+    watch: {
+        // 認証状態が変わったときに再評価
+        // 値が更新されないままルーターに評価されることを防ぐ
+        $route() {
+            this.isAuthenticated = !!localStorage.getItem('token');
+        }
+    },
+}
+</script>
