@@ -35,7 +35,7 @@ export default {
                 });
                 // ログイン成功時の処理
                 localStorage.setItem('token', response.data.token); // トークン保存
-                this.$router.push('/home'); // ホームにリダイレクト
+                this.$router.push('/'); // ホームにリダイレクト
             } catch (error) {
                 this.errorMessage = 'ログインに失敗しました。'; // エラーメッセージを表示
                 alert('ログインに失敗しました。もう一度試してください。');
