@@ -81,6 +81,7 @@ export default {
                     room: event.room,
                     room_id: event.room_id,
                     booking_id: event.booking_id,
+                    participants: event.participants,
                     allDay: event.allDay || false,
                 }));
                 successCallback(events);
@@ -131,6 +132,7 @@ export default {
                 room: "",
                 room_id: "",
                 booking_id: "",
+                participants: [],
             };
             this.showEventModal = true; // 新規予約モーダルを表示
         },
@@ -150,6 +152,7 @@ export default {
                 room: eventInfo.event.extendedProps.room,
                 room_id: eventInfo.event.extendedProps.room_id,
                 booking_id: eventInfo.event.extendedProps.booking_id,
+                participants: eventInfo.event.extendedProps.participants,
             };
             this.showEventModal = true; // イベント編集モーダルを表示
         },
@@ -166,8 +169,27 @@ export default {
         },
         async createEvent(eventData) {
             try {
-                const response = await axios.post("/calendar", eventData);
-                this.events.push(response.data);
+                // POSTリクエスト用にeventDataを変換
+                const formattedData = {
+                    room_id: eventData.room_id,
+                    start_time: eventData.start,
+                    end_time: eventData.end,
+                    user_id: localStorage.getItem('user_id'),
+                    event_title: eventData.title,
+                    participants: [
+                        { "user_id":1 },
+                        { "user_id":2 },
+                    ]
+                };
+                await axios.post("/bookings", formattedData);
+                
+                // 更新が成功したタイミングでアラートを表示
+                alert("イベントが追加されました！");
+                this.showEventModal = false;
+
+                // カレンダーの最新データを取得して反映し、再描画
+                this.updateEvents();
+
             } catch (error) {
                 console.error("Error creating event:", error);
             }
@@ -184,10 +206,6 @@ export default {
                 };
                 // データをPUTリクエストで送信
                 await axios.put(`/bookings/${eventData.booking_id}`, formattedData);
-
-                // 更新が成功したらローカルのイベントデータも更新
-                const index = this.events.findIndex((event) => event.id === eventData.id);
-                if (index !== -1) this.$set(this.events, index, formattedData);
 
                 // 更新が成功したタイミングでアラートを表示
                 alert("イベントが更新されました！");

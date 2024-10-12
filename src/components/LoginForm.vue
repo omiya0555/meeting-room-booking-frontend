@@ -34,6 +34,7 @@ export default {
                     password: this.password,
                 });
                 // ログイン成功時の処理
+                localStorage.setItem('user_id', response.data.user.id); // useridも格納
                 localStorage.setItem('token', response.data.token); // トークン保存
                 this.$router.push('/'); // ホームにリダイレクト
             } catch (error) {

@@ -16,20 +16,32 @@
                     </option>
                 </select>
 
+                <label class="text-gray-800 text-sm mb-2 block">参加者</label>
+                <div class="w-full p-2 mb-4 border rounded flex justify-start">
+                    <div v-for="user in users" :key="user.id" class="flex items-center">
+                        <!-- チェックボックス -->
+                        <template v-if="user.id !== loginUserId">
+                            <input
+                                type="checkbox"
+                                :id="'user-' + user.id"
+                                :value="user.id"
+                                v-model="selectedParticipants"
+                                class="mr-2"
+                            />
+                            <label :for="'user-' + user.id" class="text-sm mr-8">{{ user.name }}</label>
+                        </template>
+                    </div>
+                </div>
+
                 <label class="text-gray-800 text-sm">期間</label>
                 <div class="flex">
-                    <input type="datetime-local" v-model="eventData.start" required
-                    class="w-full p-2 mb-4 border rounded" />
+                    <input type="datetime-local" v-model="eventData.start" required class="w-full p-2 mb-4 border rounded" />
                     <span class="h-9 my-auto">～</span>
-                    <input type="datetime-local" v-model="eventData.end" required 
-                    class="w-full p-2 mb-4 border rounded" />
+                    <input type="datetime-local" v-model="eventData.end" required class="w-full p-2 mb-4 border rounded" />
                 </div>
                 <div class="flex justify-between mt-4">
-                    <button class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
-                        保存
-                    </button>
-                    <button type="button" @click="close"
-                        class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded">
+                    <button class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">保存</button>
+                    <button type="button" @click="close" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded">
                         キャンセル
                     </button>
                 </div>
@@ -49,7 +61,10 @@ export default {
     data() {
         return {
             eventData: { ...this.event }, // 既存のイベントデータをコピー
-            rooms: { ...this.room } // 部屋のデータを格納するプロパティ
+            rooms: [], // 部屋のデータを格納するプロパティ
+            users: [],
+            loginUserId: localStorage.getItem('user_id'),
+            selectedParticipants: [], // 選択された参加者
         };
     },
     computed: {
@@ -58,8 +73,12 @@ export default {
         },
     },
     created() {
-        // コンポーネントが作成されたときに部屋情報を取得
+        // コンポーネントが作成されたときに各情報を取得
         this.fetchRooms();
+        this.fetchUsers();
+        if (this.isEdit) {
+            this.selectedParticipants = this.event.participants.map(p => p.user_id); // 既存の参加者を初期化
+        }
     },
     methods: {
         async fetchRooms() {
@@ -70,20 +89,38 @@ export default {
                 console.error("部屋情報の取得に失敗しました", error);
             }
         },
+        async fetchUsers() {
+            try {
+                const response = await axios.get("/users");
+                this.users = response.data; // ユーザー情報を保存
+            } catch (error) {
+                console.error("ユーザー情報の取得に失敗しました", error);
+            }
+        },
         submitForm() {
-            console.log("submitted");
-            // バリデーションを行い、イベントの重複を防ぐ
+            // バリデーション
             const overlap = this.existingEvents.some(ev => {
-                return ev.room_id === this.eventData.room_id &&
-                    ((ev.start < this.eventData.end && ev.end > this.eventData.start));
+                const eventStart = new Date(ev.start);
+                const eventEnd = new Date(ev.end);
+                const inputStart = new Date(this.eventData.start);
+                const inputEnd = new Date(this.eventData.end);
+
+                // 部屋が同じで、イベントが部分的または完全に重複しているか確認
+                return ev.room_id === this.eventData.room_id && (
+                    (inputStart < eventEnd && inputEnd > eventStart) || // 開始時間が既存のイベント期間に含まれる場合
+                    (inputEnd > eventStart && inputStart < eventEnd) || // 終了時間が既存のイベント期間に含まれる場合
+                    (inputStart <= eventStart && inputEnd >= eventEnd)  // 新しいイベントが既存のイベントを完全に含む場合
+                );
             });
-            
+
             if (overlap) {
                 alert("重複するイベントがあります。");
                 console.log("overlaped");
                 return;
             }
-            this.$emit("save", this.eventData);
+            
+            console.log('No overlap detected, saving event.');
+            this.$emit('save', this.eventData);
         },
         close() {
             this.$emit("close");
