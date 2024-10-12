@@ -1,17 +1,6 @@
 <template>
-    <div class="flex justify-center my-6">
-        <button class="bg-blue-400 w-32 mt-4 p-2 rounded-sm hover:bg-blue-600 transition">
-            申請
-        </button>
-    </div>
-    <FullCalendar ref="fullCalendar" :options="calendarOptions" @dateClick="handleDateClick" @eventClick="handleEventClick" />    <!-- イベント一覧モーダル -->
-    <EventListModal
-        v-if="showEventListModal"
-        :events="selectedEvents"
-        @close="showEventListModal = false"
-        @edit="openEditModal"
-        @new="openNewReservationModal"
-    />
+    <FullCalendar ref="fullCalendar" :options="calendarOptions" @dateClick="handleDateClick" @eventClick="handleEventClick" class="mt-6" /> 
+
     <!-- イベント作成・編集モーダル -->
     <EventModal
         v-if="showEventModal"
@@ -19,6 +8,7 @@
         :existingEvents="events"
         @close="showEventModal = false"
         @save="saveEvent"
+        @delete="deleteEvent"
     />
 </template>
 
@@ -28,14 +18,11 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import jaLocale from "@fullcalendar/core/locales/ja";
 import axios from "axios";
-
-import EventListModal from "./EventListModal.vue";
 import EventModal from "./EventModal.vue";
 
 export default {
     components: {
         FullCalendar,
-        EventListModal,
         EventModal,
     },
     data() {
@@ -55,7 +42,6 @@ export default {
                     end: "next",
                 },
                 selectable: true,
-                editable: true,
                 contentHeight: 600,
                 events: this.fetchEvents,
                 dateClick: this.handleDateClick,
@@ -176,10 +162,7 @@ export default {
                     end_time: eventData.end,
                     user_id: localStorage.getItem('user_id'),
                     event_title: eventData.title,
-                    participants: [
-                        { "user_id":1 },
-                        { "user_id":2 },
-                    ]
+                    participants: [],
                 };
                 await axios.post("/bookings", formattedData);
                 
@@ -218,7 +201,27 @@ export default {
                 console.error("Error updating event:", error);
                 alert("イベントの更新に失敗しました。");
             }
-        }
+        },
+        deleteEvent(eventData) {
+            if (!eventData.booking_id) {
+                return;
+            }
+            // APIを通じてイベントを削除
+            console.log(eventData.booking_id);
+            axios.delete(`/bookings/${eventData.booking_id}`)
+                .then(() => {
+                // 削除が成功したらローカルのイベントリストから削除
+                this.events = this.events.filter(event => event.id !== eventData.id);
+                alert("イベントが削除されました");
+                this.showEventModal = false; // モーダルを閉じる
+                // カレンダーの最新データを取得して反映し、再描画
+                this.updateEvents();
+            })
+            .catch(error => {
+                console.error("Error deleting event:", error);
+                alert("イベントの削除に失敗しました。");
+            });
+        },
     },
 };
 </script>

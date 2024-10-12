@@ -1,8 +1,12 @@
 <template>
     <div class="fixed inset-0 bg-gray-900 bg-opacity-50 flex justify-center items-center z-50" @click.self="close">
-        <div class="bg-white p-6 rounded-lg shadow-lg w-100">
+        <div class="bg-white p-6 rounded-lg shadow-lg w-100 relative">
+            <button @click="confirmDelete" class="absolute top-0 right-0 mt-2 mr-2 text-red-500">
+                削除
+            </button>
             <h3 class="text-xl font-semibold mb-4">{{ isEdit ? 'イベント編集' : '新規イベント作成' }}</h3>
             <form @submit.prevent="submitForm">
+
                 <label class="text-gray-800 text-sm">タイトル</label>
                 <input v-model="eventData.title" placeholder="イベントタイトル" required
                     class="w-full p-2 mb-4 border rounded" />
@@ -100,6 +104,11 @@ export default {
         submitForm() {
             // バリデーション
             const overlap = this.existingEvents.some(ev => {
+
+                if (ev.id === this.eventData.id) {
+                    return false; // 同じイベントは無視
+                }
+
                 const eventStart = new Date(ev.start);
                 const eventEnd = new Date(ev.end);
                 const inputStart = new Date(this.eventData.start);
@@ -119,12 +128,17 @@ export default {
                 return;
             }
             
-            console.log('No overlap detected, saving event.');
             this.$emit('save', this.eventData);
         },
         close() {
             this.$emit("close");
         },
+            // 削除の確認と実行
+        confirmDelete() {
+            if (confirm('このイベントを削除してよろしいですか？')) {
+                this.$emit('delete', this.eventData); // 親コンポーネントに削除の通知
+            }
+        }
     },
 };
 </script>

@@ -10,19 +10,21 @@
         <CalendarEvent></CalendarEvent>
     </div>
 </div>
-<div class="inset-x-0 bottom-0 bg-gray-900 h-24">
-    <hr class="mb-8"/>
-    <span>test</span>
-</div>
+<AppFooter></AppFooter>
+
+
+
 </template>
 
 <script>
 import CalendarEvent from '../components/CalendarEvent.vue';
+import AppFooter from './AppFooter.vue';
 import AppHeader from './AppHeader.vue';
 export default {
     components: {
         AppHeader,
         CalendarEvent,
+        AppFooter,
     }
 };
 </script>
