@@ -1,7 +1,7 @@
 <template>
     <div class="fixed inset-0 bg-gray-900 bg-opacity-50 flex justify-center items-center z-50" @click.self="close">
         <div class="bg-white p-6 rounded-lg shadow-lg w-100 relative">
-            <button @click="confirmDelete" class="absolute top-0 right-0 mt-2 mr-2 text-red-500">
+            <button v-if="isEdit" @click="confirmDelete" class="absolute top-0 right-0 mt-2 mr-2 text-red-500">
                 削除
             </button>
             <h3 class="text-xl font-semibold mb-4">{{ isEdit ? 'イベント編集' : '新規イベント作成' }}</h3>
