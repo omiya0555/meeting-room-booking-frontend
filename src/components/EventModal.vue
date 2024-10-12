@@ -5,6 +5,7 @@
                 削除
             </button>
             <h3 class="text-xl font-semibold mb-4">{{ isEdit ? 'イベント編集' : '新規イベント作成' }}</h3>
+
             <form @submit.prevent="submitForm">
 
                 <label class="text-gray-800 text-sm">タイトル</label>
@@ -14,9 +15,7 @@
                 <label class="text-gray-800 text-sm">会議室</label>
                 <select v-model="eventData.room_id" class="w-full p-2 mb-4 border rounded" required>
                     <option v-for="room in rooms" :key="room.id" :value="room.id">
-                        <span class="text-sm">
-                            {{ room.room_name }}
-                        </span>
+                        <span class="text-sm">{{ room.room_name }}</span>
                     </option>
                 </select>
 
@@ -25,13 +24,8 @@
                     <div v-for="user in users" :key="user.id" class="flex items-center">
                         <!-- チェックボックス -->
                         <template v-if="user.id !== loginUserId">
-                            <input
-                                type="checkbox"
-                                :id="'user-' + user.id"
-                                :value="user.id"
-                                v-model="selectedParticipants"
-                                class="mr-2"
-                            />
+                            <input type="checkbox" :id="'user-' + user.id" :value="user.id"
+                                v-model="selectedParticipants" class="mr-2" />
                             <label :for="'user-' + user.id" class="text-sm mr-8">{{ user.name }}</label>
                         </template>
                     </div>
@@ -39,15 +33,17 @@
 
                 <label class="text-gray-800 text-sm">期間</label>
                 <div class="flex">
-                    <input type="datetime-local" v-model="eventData.start" required class="w-full p-2 mb-4 border rounded" />
+                    <input type="datetime-local" v-model="eventData.start" required
+                        class="w-full p-2 mb-4 border rounded" />
                     <span class="h-9 my-auto">～</span>
-                    <input type="datetime-local" v-model="eventData.end" required class="w-full p-2 mb-4 border rounded" />
+                    <input type="datetime-local" v-model="eventData.end" required
+                        class="w-full p-2 mb-4 border rounded" />
                 </div>
+
                 <div class="flex justify-between mt-4">
                     <button class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">保存</button>
-                    <button type="button" @click="close" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded">
-                        キャンセル
-                    </button>
+                    <button type="button" @click="close"
+                        class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded">キャンセル</button>
                 </div>
             </form>
         </div>
@@ -77,11 +73,11 @@ export default {
         },
     },
     created() {
-        // コンポーネントが作成されたときに各情報を取得
         this.fetchRooms();
         this.fetchUsers();
-        if (this.isEdit) {
-            this.selectedParticipants = this.event.participants.map(p => p.user_id); // 既存の参加者を初期化
+        if (this.isEdit && this.event.participants) {
+            // 既存の参加者を選択済みとして初期化
+            this.selectedParticipants = this.event.participants.map(p => p.user_id);
         }
     },
     methods: {
@@ -102,38 +98,33 @@ export default {
             }
         },
         submitForm() {
-            // バリデーション
+            // バリデーション処理
             const overlap = this.existingEvents.some(ev => {
-
-                if (ev.id === this.eventData.id) {
-                    return false; // 同じイベントは無視
-                }
-
+                if (ev.id == this.eventData.id) return false; // 同じイベントは無視
                 const eventStart = new Date(ev.start);
                 const eventEnd = new Date(ev.end);
                 const inputStart = new Date(this.eventData.start);
                 const inputEnd = new Date(this.eventData.end);
-
-                // 部屋が同じで、イベントが部分的または完全に重複しているか確認
                 return ev.room_id === this.eventData.room_id && (
-                    (inputStart < eventEnd && inputEnd > eventStart) || // 開始時間が既存のイベント期間に含まれる場合
-                    (inputEnd > eventStart && inputStart < eventEnd) || // 終了時間が既存のイベント期間に含まれる場合
-                    (inputStart <= eventStart && inputEnd >= eventEnd)  // 新しいイベントが既存のイベントを完全に含む場合
+                    (inputStart < eventEnd && inputEnd > eventStart) ||
+                    (inputEnd > eventStart && inputStart < eventEnd) ||
+                    (inputStart <= eventStart && inputEnd >= eventEnd)
                 );
             });
 
             if (overlap) {
                 alert("重複するイベントがあります。");
-                console.log("overlaped");
                 return;
             }
-            
+
+            // 参加者を `eventData` に反映
+            this.eventData.participants = this.selectedParticipants.map(userId => ({ user_id: userId }));
             this.$emit('save', this.eventData);
         },
         close() {
             this.$emit("close");
         },
-            // 削除の確認と実行
+        // 削除の確認と実行
         confirmDelete() {
             if (confirm('このイベントを削除してよろしいですか？')) {
                 this.$emit('delete', this.eventData); // 親コンポーネントに削除の通知

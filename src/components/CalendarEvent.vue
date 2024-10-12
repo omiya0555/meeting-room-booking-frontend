@@ -30,7 +30,6 @@ export default {
             events: [], // イベントリスト
             selectedEvents: [], // 選択された日のイベントリスト
             selectedEvent: null, // 選択されたイベント
-            showEventListModal: false, // イベント一覧モーダルの表示状態
             showEventModal: false, // イベント詳細モーダルの表示状態
             calendarOptions: {
                 plugins: [dayGridPlugin, interactionPlugin],
@@ -59,11 +58,12 @@ export default {
                         end: end.toISOString(),
                     },
                 });
+                console.log(response.data);
                 const events = response.data.map((event) => ({
                     id: event.id,
                     title: event.title,
-                    start: event.start,
-                    end: event.end,
+                    start: new Date(event.start).toISOString(),  // ISO形式に変換
+                    end: new Date(event.end).toISOString(),      // ISO形式に変換
                     room: event.room,
                     room_id: event.room_id,
                     booking_id: event.booking_id,
@@ -91,11 +91,8 @@ export default {
                 this.fetchEvents(
                     fetchInfo, // 取得した表示範囲をfetchInfoとして渡す
                     (events) => { // successCallback
-                        console.log("Events fetched successfully:", events);
                         this.events = events; // カレンダーのイベントを更新
-
-                        // カレンダーの再描画
-                        calendarApi.refetchEvents();
+                        calendarApi.refetchEvents(); // 再描画
                     },
                     (error) => { // failureCallback
                         console.error("Error fetching events:", error);
@@ -142,10 +139,6 @@ export default {
             };
             this.showEventModal = true; // イベント編集モーダルを表示
         },
-        openNewReservationModal(date) {
-            this.selectedEvent = { start: date, end: date, title: "", room: "" };
-            this.showEventModal = true;
-        },
         saveEvent(eventData) {
             if (eventData.id) {
                 this.updateEvent(eventData);
@@ -162,7 +155,7 @@ export default {
                     end_time: eventData.end,
                     user_id: localStorage.getItem('user_id'),
                     event_title: eventData.title,
-                    participants: [],
+                    participants: eventData.participants || [],
                 };
                 await axios.post("/bookings", formattedData);
                 
@@ -179,14 +172,17 @@ export default {
         },
         // イベントの更新処理
         async updateEvent(eventData) {
+            
             try {
                 // PUTリクエスト用にeventDataを変換
                 const formattedData = {
                     room_id: eventData.room_id,
                     start_time: eventData.start,
                     end_time: eventData.end,
-                    event_title: eventData.title
+                    event_title: eventData.title,
+                    participants: eventData.participants || [],
                 };
+                console.log(formattedData);
                 // データをPUTリクエストで送信
                 await axios.put(`/bookings/${eventData.booking_id}`, formattedData);
 
@@ -207,7 +203,6 @@ export default {
                 return;
             }
             // APIを通じてイベントを削除
-            console.log(eventData.booking_id);
             axios.delete(`/bookings/${eventData.booking_id}`)
                 .then(() => {
                 // 削除が成功したらローカルのイベントリストから削除
@@ -223,5 +218,9 @@ export default {
             });
         },
     },
+    mounted() {
+        // カレンダーの初期データを取得
+        this.updateEvents();
+    }
 };
 </script>
