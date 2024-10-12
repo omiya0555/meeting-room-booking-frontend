@@ -7,7 +7,6 @@
 
     <!-- main component (calendar) -->
     <div class="col-span-5 row-span-4 row-start-2 bg-white px-16 border">
-        <BookingButtons></BookingButtons>
         <CalendarEvent></CalendarEvent>
     </div>
 </div>
@@ -20,12 +19,10 @@
 <script>
 import CalendarEvent from '../components/CalendarEvent.vue';
 import AppHeader from './AppHeader.vue';
-import BookingButtons from './BookingButtons.vue';
 export default {
     components: {
         AppHeader,
         CalendarEvent,
-        BookingButtons,
     }
 };
 </script>
